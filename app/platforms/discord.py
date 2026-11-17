@@ -1,5 +1,5 @@
 
-from datetime import datetime, timezone
+from datetime import datetime
 
 import httpx
 
@@ -23,12 +23,10 @@ class DiscordPlatform(BasePlatform):
 
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
-                # Get webhook details to obtain server and channel IDs.
                 webhook_response = await client.get(webhook_url)
                 webhook_response.raise_for_status()
                 webhook = webhook_response.json()
 
-                # Publish the message.
                 response = await client.post(
                     webhook_url,
                     params={"wait": "true"},
@@ -59,22 +57,31 @@ class DiscordPlatform(BasePlatform):
                 posted_url=posted_url,
                 public_access=False,
                 date=created_at.date(),
-                time=created_at.time().replace(tzinfo=None)
+                time=created_at.time().replace(tzinfo=None),
+                error=None
             )
+
+        except httpx.TimeoutException:
+            error = "Discord request timed out."
 
         except httpx.HTTPStatusError as exc:
-            return PlatformResult(
-                platform=self.platform_name,
-                status="failed",
-                error=(
-                    f"Discord HTTP error: {exc.response.status_code} - "
-                    f"{exc.response.text}"
-                )
-            )
+            status_code = exc.response.status_code
+
+            if status_code in (401, 403, 404):
+                error = "Discord webhook is invalid or access was denied."
+            elif status_code == 429:
+                error = "Discord rate limit exceeded. Try again later."
+            else:
+                error = f"Discord API returned HTTP {status_code}."
+
+        except httpx.RequestError:
+            error = "Could not connect to the Discord server."
 
         except Exception as exc:
-            return PlatformResult(
-                platform=self.platform_name,
-                status="failed",
-                error=str(exc)
-            )
+            error = f"Discord publishing failed ({type(exc).__name__})."
+
+        return PlatformResult(
+            platform=self.platform_name,
+            status="failed",
+            error=error
+        )

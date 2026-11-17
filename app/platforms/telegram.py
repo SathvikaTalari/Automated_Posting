@@ -1,4 +1,3 @@
-
 from datetime import datetime, timezone
 
 import httpx
@@ -38,11 +37,15 @@ class TelegramPlatform(BasePlatform):
                 result = response.json()
 
                 if not result.get("ok"):
-                    raise ValueError(
-                        result.get("description", "Telegram API error")
+                    error_code = result.get("error_code", "unknown")
+                    return PlatformResult(
+                        platform=self.platform_name,
+                        status="failed",
+                        error=f"Telegram API rejected the request (code: {error_code})."
                     )
 
             telegram_message = result["result"]
+
             created_at = datetime.fromtimestamp(
                 telegram_message["date"],
                 tz=timezone.utc
@@ -63,20 +66,24 @@ class TelegramPlatform(BasePlatform):
                 posted_url=posted_url,
                 public_access=bool(username),
                 date=created_at.date(),
-                time=created_at.time().replace(tzinfo=None)
+                time=created_at.time().replace(tzinfo=None),
+                error=None
             )
+
+        except httpx.TimeoutException:
+            error = "Telegram request timed out."
 
         except httpx.HTTPStatusError as exc:
-            return PlatformResult(
-                platform=self.platform_name,
-                status="failed",
-                error=f"Telegram HTTP error: {exc.response.status_code} - "
-                      f"{exc.response.text}"
-            )
+            error = f"Telegram returned HTTP {exc.response.status_code}."
+
+        except httpx.RequestError:
+            error = "Could not connect to the Telegram server."
 
         except Exception as exc:
-            return PlatformResult(
-                platform=self.platform_name,
-                status="failed",
-                error=str(exc)
-            )
+            error = f"Telegram publishing failed ({type(exc).__name__})."
+
+        return PlatformResult(
+            platform=self.platform_name,
+            status="failed",
+            error=error
+        )
