@@ -1,4 +1,3 @@
-
 from datetime import datetime, timezone
 
 import httpx
@@ -27,9 +26,8 @@ class DevToPlatform(BasePlatform):
             "User-Agent": "AutomatedMultiPlatformPostingSystem/1.0"
         }
 
-        # Start with a draft to verify the integration safely.
         article = {
-            "title": "Automated Posting System - Integration Test",
+            "title": "Automated Posting System - Shared Update",
             "body_markdown": message,
             "published": True
         }
@@ -45,40 +43,55 @@ class DevToPlatform(BasePlatform):
                 response.raise_for_status()
                 post = response.json()
 
-            created_at_value = post.get("published_at") or post.get("created_at")
+            published_at_value = post.get("published_at")
 
-            if created_at_value:
+            if published_at_value:
                 created_at = datetime.fromisoformat(
-                    created_at_value.replace("Z", "+00:00")
+                    published_at_value.replace("Z", "+00:00")
                 )
             else:
-                created_at = datetime.now(timezone.utc)
+                created_at_value = post.get("created_at")
 
-            posted_url = post.get("url")
+                if created_at_value:
+                    created_at = datetime.fromisoformat(
+                        created_at_value.replace("Z", "+00:00")
+                    )
+                else:
+                    created_at = datetime.now(timezone.utc)
 
             return PlatformResult(
                 platform=self.platform_name,
                 status="success",
-                posted_url=posted_url,
-                public_access=bool(post.get("published_at")),
+                posted_url=post.get("url"),
+                public_access=bool(published_at_value),
                 date=created_at.date(),
                 time=created_at.time().replace(tzinfo=None),
                 error=None
             )
 
+        except httpx.TimeoutException:
+            error = "DEV Community request timed out."
+
         except httpx.HTTPStatusError as exc:
-            return PlatformResult(
-                platform=self.platform_name,
-                status="failed",
-                error=(
-                    f"DEV Community HTTP error: "
-                    f"{exc.response.status_code} - {exc.response.text}"
-                )
-            )
+            status_code = exc.response.status_code
+
+            if status_code in (401, 403):
+                error = "DEV Community authentication failed. Check your API key."
+            elif status_code == 422:
+                error = "DEV Community rejected the article content."
+            elif status_code == 429:
+                error = "DEV Community rate limit exceeded. Try again later."
+            else:
+                error = f"DEV Community API returned HTTP {status_code}."
+
+        except httpx.RequestError:
+            error = "Could not connect to DEV Community."
 
         except Exception as exc:
-            return PlatformResult(
-                platform=self.platform_name,
-                status="failed",
-                error=str(exc)
-            )
+            error = f"DEV Community publishing failed ({type(exc).__name__})."
+
+        return PlatformResult(
+            platform=self.platform_name,
+            status="failed",
+            error=error
+        )
