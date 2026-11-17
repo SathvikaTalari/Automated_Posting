@@ -1,4 +1,5 @@
-from datetime import datetime, timezone
+
+from datetime import datetime
 
 import httpx
 
@@ -46,12 +47,31 @@ class MastodonPlatform(BasePlatform):
                 posted_url=post.get("url"),
                 public_access=post.get("visibility") == "public",
                 date=created_at.date(),
-                time=created_at.time().replace(tzinfo=None)
+                time=created_at.time().replace(tzinfo=None),
+                error=None
             )
 
+        except httpx.TimeoutException:
+            error = "Mastodon request timed out."
+
+        except httpx.HTTPStatusError as exc:
+            status_code = exc.response.status_code
+
+            if status_code in (401, 403):
+                error = "Mastodon authentication failed. Check your access token."
+            elif status_code == 429:
+                error = "Mastodon rate limit exceeded. Try again later."
+            else:
+                error = f"Mastodon API returned HTTP {status_code}."
+
+        except httpx.RequestError:
+            error = "Could not connect to the Mastodon server."
+
         except Exception as exc:
-            return PlatformResult(
-                platform=self.platform_name,
-                status="failed",
-                error=str(exc)
-            )
+            error = f"Mastodon publishing failed ({type(exc).__name__})."
+
+        return PlatformResult(
+            platform=self.platform_name,
+            status="failed",
+            error=error
+        )

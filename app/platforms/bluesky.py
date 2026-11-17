@@ -25,10 +25,12 @@ class BlueskyPlatform(BasePlatform):
             )
 
         except Exception as exc:
+            error_type = type(exc).__name__
+
             return PlatformResult(
                 platform=self.platform_name,
                 status="failed",
-                error=str(exc)
+                error=f"Bluesky publishing failed ({error_type})."
             )
 
     def _publish_sync(self, message: str) -> PlatformResult:
