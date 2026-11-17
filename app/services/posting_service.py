@@ -41,7 +41,7 @@ class PostingService:
                     PlatformResult(
                         platform=platform.platform_name,
                         status="failed",
-                        error=str(response)
+                        error=f"Unexpected publishing error ({type(response).__name__})."
                     )
                 )
             else:
