@@ -228,6 +228,45 @@ Response schemas and validation error formats (`HTTP 422`).
 
 ![Response Schema & Validation](screenshots/07-swagger-schema-and-validation.png)
 
+---
+
+### Live Published Posts on Third-Party Platforms
+
+Below are the live, publicly accessible and direct posted updates across all 5 integrated platforms resulting from the single API request:
+
+#### 1. Bluesky
+Live post on Bluesky profile (`sathvikatalari.bsky.social`) with rich link metadata and click-through URL:
+
+![Bluesky Live Post](screenshots/08-platform-bluesky-post.png)
+
+---
+
+#### 2. Mastodon
+Live public toot on Mastodon instance (`mastodon.social/@SathvikaT`) displaying message content and GitHub preview card:
+
+![Mastodon Live Post](screenshots/09-platform-mastodon-post.png)
+
+---
+
+#### 3. Telegram
+Message delivered live to the public broadcast channel (`t.me/SathvikaAutoUpdates`) with automatic link preview:
+
+![Telegram Live Post](screenshots/10-platform-telegram-post.png)
+
+---
+
+#### 4. Discord
+Message published via Discord Webhook into the dedicated `#automated-posting-system` channel with instant preview card:
+
+![Discord Live Post](screenshots/11-platform-discord-post.png)
+
+---
+
+#### 5. DEV Community
+Article created and published live on DEV Community (`dev.to/sathvikatalari`) using the Articles API:
+
+![DEV Community Live Post](screenshots/12-platform-devto-post.png)
+
 ## Validation Rules
 
 - Message must not be empty.
