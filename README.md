@@ -177,6 +177,57 @@ The response above illustrates the structure. Actual platform URLs and timestamp
 - `partial` – At least one platform succeeded and another failed.
 - `failed` – All platforms failed.
 
+## Screenshots
+
+Here is the visual walkthrough of the server running and publishing across all 5 platforms via Swagger UI (`http://localhost:4000/docs`):
+
+### 1. Server Startup and API Logs
+Uvicorn server running on `http://0.0.0.0:4000` handling Swagger docs and successful `POST /posting` requests.
+
+![Server Startup and Terminal Logs](screenshots/01-server-terminal-startup.png)
+
+---
+
+### 2. Swagger UI Overview
+Interactive FastAPI documentation interface showing the available `/posting` endpoint.
+
+![Swagger UI Overview](screenshots/02-swagger-ui-overview.png)
+
+---
+
+### 3. Endpoint Details & Parameter Specification
+Expanded view of `POST /posting` showing request body and parameter specifications.
+
+![Endpoint Specification](screenshots/03-swagger-endpoint-expanded.png)
+
+---
+
+### 4. Executing Request in Swagger UI
+Executing a live test request with the required message format and link.
+
+![Executing Request](screenshots/04-swagger-request-payload.png)
+
+---
+
+### 5. API Response – Part 1 (Bluesky & Mastodon)
+Successful `200 OK` response with `status: "completed"`, `total_platforms: 5`, `successful: 5`, `failed: 0`, showing generated live post URLs for Bluesky and Mastodon.
+
+![Successful Response Part 1](screenshots/05-swagger-response-success-part1.png)
+
+---
+
+### 6. API Response – Part 2 (Telegram, Discord & DEV Community)
+Generated live post URLs and timestamps for Telegram, Discord, and DEV Community.
+
+![Successful Response Part 2](screenshots/06-swagger-response-success-part2.png)
+
+---
+
+### 7. Response Schema & Validation Error Definitions
+Response schemas and validation error formats (`HTTP 422`).
+
+![Response Schema & Validation](screenshots/07-swagger-schema-and-validation.png)
+
 ## Validation Rules
 
 - Message must not be empty.
